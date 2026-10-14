@@ -5,11 +5,7 @@ import { Rng } from '../util/rng.js';
 const BANDS = [
   {
     min: 10,
-    lines: [
-      'Ten. Not as bad as it sounds. Better, actually.',
-      "Perfect. I'd frame it, but the frame would break.",
-      'Not a scratch on the heart. First time for everything.',
-    ],
+    lines: ['Champions bore me.'],
   },
   {
     min: 8,
@@ -25,7 +21,7 @@ const BANDS = [
   },
   {
     min: 2,
-    lines: ['I doubt we survived.', "Champions bore me anyway. You're safe.", "Glitter's like guilt. So is this."],
+    lines: ['I doubt we survived.', "Glitter's like guilt. So is this.", 'Not as bad as it sounds. Worse, actually.'],
   },
   {
     min: 0,
