@@ -96,7 +96,7 @@ export class Audio {
   // Call from the tap that starts the run so iOS lets the <audio> play.
   startMusic(track) {
     this.stopMusic();
-    this.rate = 1;
+    this.rate = this.damageRate = this.flipRate = 1;
     if (track?.url) {
       const el = (this.el = new window.Audio(track.url));
       el.loop = true;
@@ -141,7 +141,18 @@ export class Audio {
 
   // brokenCount 0..3 sets how out of tune it sounds; wobble() is a one-off sag.
   setDamage(brokenCount) {
-    this.rate = 1 - brokenCount * 0.035;
+    this.damageRate = 1 - brokenCount * 0.035;
+    this._applyRate();
+  }
+
+  // Past Pilrig everything goes woozy: slowed-tape music.
+  setFlip(on) {
+    this.flipRate = on ? 0.8 : 1;
+    this._applyRate();
+  }
+
+  _applyRate() {
+    this.rate = (this.damageRate ?? 1) * (this.flipRate ?? 1);
     if (this.el) this.el.playbackRate = this.rate;
     if (this.synth) this.synth.detune = this.rate;
   }
@@ -249,6 +260,20 @@ export class Audio {
     lfo.start(t);
     o.stop(t + 0.7);
     lfo.stop(t + 0.7);
+  }
+  clawWarn() {
+    // a rising scrape from below
+    this._noise(0.8, 300, 3, 0.35, 'bandpass', 0, 2400);
+    this._tone('sawtooth', 55, 110, 0.8, 0.12);
+  }
+  clawSlam() {
+    this._tone('sine', 90, 35, 0.35, 0.8);
+    this._noise(0.25, 900, 0.7, 0.6, 'lowpass', 0, 200);
+  }
+  tapeStop() {
+    // the record slowing under your finger
+    this._tone('sawtooth', 440, 60, 0.9, 0.18);
+    this._tone('square', 660, 90, 0.9, 0.08);
   }
   fall() {
     this._tone('sine', 1200, 180, 0.7, 0.25);

@@ -3,6 +3,7 @@ dist
 .DS_Store
 .playwright-mcp
 
-# Gurry hasn't cleared publishing the album tracks yet; the site uses the chiptune
+# Only tracks Gurry has cleared for publishing are committed
 public/music/*
 !public/music/.gitkeep
+!public/music/like-a-landlord.mp3

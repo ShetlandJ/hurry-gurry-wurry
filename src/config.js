@@ -12,8 +12,8 @@ export const SPEED_START = 8.5;
 export const SPEED_END = 13;
 export const ACCEL = 5;
 
-// The gig starts STAGE_TIME seconds after "HURRY!". A clean run takes ~72s.
-export const STAGE_TIME = 77;
+// The gig starts STAGE_TIME seconds after "HURRY!". A clean run takes 64-69s.
+export const STAGE_TIME = 75;
 
 export const JUMP_TIME = 0.6;
 export const JUMP_HEIGHT = 1.15;
@@ -46,6 +46,17 @@ export const TRAM_ZONE = 95; // after a tram rings, only jumpables on the paveme
 // breaks kit but never knocks him down) and drops back CREATURE_KNOCKBACK metres.
 export const CREATURE_SHOW = 45;
 export const CREATURE_KNOCKBACK = 40;
+
+// Claw attacks: a shadow marks Gurry's lane for CLAW_WARN, then the claw slams
+// down it for CLAW_SLAM. Change lane to dodge; jumping doesn't help.
+export const CLAW_WARN = 0.85;
+export const CLAW_SLAM = 0.3;
+export const CLAW_W = 2.4;
+
+// Pilrig St was the Edinburgh/Leith border. Crossing it flips the whole game
+// into a negative print for a stretch.
+export const FLIP_FROM = 380;
+export const FLIP_TO = 500;
 
 // Each record is a burst of pace: how you pull away from the creature.
 export const RECORD_BOOST = 0.8; // m/s added per record

@@ -1,5 +1,5 @@
-import { SIM_DT, LANE_W, ROUTE_LENGTH, STAGE_TIME, ITEMS, LANDMARKS, VENUE } from './config.js';
-import { buildCourse } from './sim/course.js';
+import { SIM_DT, LANE_W, ROUTE_LENGTH, STAGE_TIME, ITEMS, LANDMARKS, VENUE, FLIP_FROM, FLIP_TO } from './config.js';
+import { buildCourse, SET_PIECES } from './sim/course.js';
 import { Runner } from './sim/runner.js';
 import { scoreRun, SCORING_VERSION } from './sim/scoring.js';
 import { quipFor } from './sim/quips.js';
@@ -73,8 +73,8 @@ class Game {
     this.track = CHIPTUNE;
     this.audio.probe().then((found) => {
       this.tracks = [...found, CHIPTUNE];
-      const saved = store('track', 'like-a-landlord');
-      this.track = this.tracks.find((t) => t.file === saved) || found.find((t) => t.file === 'like-a-landlord') || this.tracks[0];
+      const saved = params.get('track') || store('track', 'like-a-landlord');
+      this.track = this.tracks.find((t) => t.file === saved) || this.tracks[0];
       $('track-name').textContent = this.track.title;
       $('track-chip').hidden = this.tracks.length < 2;
     });
@@ -104,6 +104,8 @@ class Game {
     this.lastBeep = 4;
     this.acc = 0;
     this.landmarkIdx = 1;
+    this.pieceIdx = 0;
+    this._setFlip(false);
     this.outroT = 0;
     this.input.clear();
     this.audio.setDamage(0);
@@ -116,8 +118,9 @@ class Game {
     $('toast').hidden = true;
     this._hudKit();
     const np = $('now-playing');
-    np.hidden = !this.track.url;
-    if (this.track.url) {
+    const credited = !!this.track.url;
+    np.hidden = !credited;
+    if (credited) {
       np.innerHTML = `Now playing <b>${this.track.title}</b> by Gurry Wurry`;
       np.style.animation = 'none';
       void np.offsetWidth;
@@ -142,6 +145,7 @@ class Game {
 
   toTitle() {
     this.audio.stopMusic(0.4);
+    this._setFlip(false);
     this.state = 'title';
     this.run = null;
     $('paused').hidden = true;
@@ -305,6 +309,13 @@ class Game {
           break;
         case 'up':
           break;
+        case 'clawWarn':
+          this.audio.clawWarn();
+          break;
+        case 'claw':
+          this.audio.clawSlam();
+          this.scene.shake = 0.7;
+          break;
         case 'bitten':
           this.audio.growl();
           this.scene.shake = 0.8;
@@ -341,8 +352,25 @@ class Game {
     // cross streets
     const lm = LANDMARKS[this.landmarkIdx];
     if (lm && run.s >= lm.s && lm.s < ROUTE_LENGTH) {
-      this._toast(lm.name, 'small');
+      if (lm.s !== FLIP_FROM) this._toast(lm.name, 'small');
       this.landmarkIdx++;
+    }
+    // set pieces get announced just before they arrive
+    const piece = SET_PIECES[this.pieceIdx];
+    if (piece && run.s >= piece.from - 28) {
+      this._banner(piece.name, piece.sub);
+      this.pieceIdx++;
+    }
+    // Pilrig: over the old border into Leith, and into the negative
+    const flip = run.s >= FLIP_FROM && run.s < FLIP_TO;
+    if (flip !== this.flipped) {
+      this._setFlip(flip);
+      if (flip) {
+        this.audio.tapeStop();
+        this._banner('Welcome to Leith', 'Pilrig St: the old border');
+      } else {
+        this._toast('Back to normal. Ish.', 'small');
+      }
     }
   }
 
@@ -355,6 +383,24 @@ class Game {
     void el.offsetWidth;
     el.style.animation = '';
     this.toastTimer = kind === 'small' ? 1.0 : 1.3;
+  }
+
+  _banner(title, sub) {
+    const el = $('banner');
+    el.querySelector('b').textContent = title;
+    el.querySelector('small').textContent = sub;
+    el.hidden = false;
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+    clearTimeout(this.bannerTimer);
+    this.bannerTimer = setTimeout(() => (el.hidden = true), 2200);
+  }
+
+  _setFlip(on) {
+    this.flipped = on;
+    $('app').classList.toggle('flipped', on);
+    this.audio.setFlip(on);
   }
 
   _countdown(text, go = false) {

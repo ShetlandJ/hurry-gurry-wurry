@@ -27,7 +27,8 @@ function bot(r) {
     let block = Infinity;
     let jump = Infinity;
     for (const o of r.obstacles) {
-      if (o.hit || o.lane !== lane) continue;
+      const lanes = o.sway ? [o.sway.from, o.sway.to] : [o.lane];
+      if (o.hit || !lanes.includes(lane)) continue;
       const d = o.s - o.len / 2 - r.s;
       if (d < -1 || d > horizon) continue;
       if (o.jump) jump = Math.min(jump, d);
@@ -40,6 +41,7 @@ function bot(r) {
         if (d / (r.v + TRAM_SPEED) < 2.0) block = Math.min(block, Math.max(0, d));
       }
     }
+    for (const c of r.claws) if ((c.state === 'warn' || c.state === 'slam') && c.lane === lane) block = 0;
     return { block, jump };
   };
 
@@ -91,6 +93,17 @@ check('every course has records, glue and at least two trams', () => {
     assert.ok(c.pickups.some((p) => p.kind === 'glue'), `${seed} no glue`);
     assert.ok(c.trams.length >= 2, `${seed} trams ${c.trams.length}`);
   }
+});
+check('every claw fires; the bot dodges them and a player who stands still gets clawed', () => {
+  const r = play('seed5');
+  assert.equal(r.claws.length, 3);
+  assert.ok(r.claws.every((c) => c.state === 'done' && !c.hit), JSON.stringify(r.claws));
+  const lazy = play('seed5', () => ({ glue: true }));
+  assert.ok(lazy.claws.some((c) => c.hit), 'no claw ever landed');
+});
+check('set pieces are on the course', () => {
+  const kinds = new Set(buildCourse('seed1').obstacles.map((o) => o.kind));
+  for (const k of ['barrier', 'fan', 'drunk']) assert.ok(kinds.has(k), `missing ${k}`);
 });
 check('same seed, same result', () => {
   assert.deepEqual(play('repeat').result(), play('repeat').result());

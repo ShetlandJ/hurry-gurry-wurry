@@ -2,7 +2,7 @@
 
 Hurry, Gurry Wurry!: a 2D canvas + Vite browser runner for Gurry Wurry (Dave King, Leith avant-pop musician), made by James to promote his album *Glue* (Bandcamp: https://gurrywurry.bandcamp.com/album/glue). Gurry runs down Leith Walk to his launch gig at Leith Theatre, dodging trams, landlords and loveseats while the horned creature from the Glue sleeve chases him. It goes out to his Instagram audience, so most players are on phones in portrait.
 
-Gurry has given permission to use any of his songs, but James hasn't yet cleared publishing the MP3s: `public/music/*` is gitignored, so the live site plays the chiptune. Don't commit audio until James says so.
+Gurry has given permission to use any of his songs. Like A Landlord's MP3 is cleared for publishing (14 Oct 2026) and is the live default. Other tracks in `public/music/` stay gitignored until James clears them; add a `!public/music/<file>.mp3` line to `.gitignore` when he does.
 
 ## Commands
 
@@ -23,6 +23,9 @@ Run `npm test` after touching `src/sim/` or `src/config.js`. The bot must get a 
 ## Architecture
 
 - `src/sim/` is pure and deterministic (no DOM, `Date` or `Math.random`): `course.js` builds obstacles/pickups/trams from a seed, `runner.js` steps one run at `SIM_DT` (120Hz) from input frames, `scoring.js` turns a result into a score, `quips.js` picks Gurry's line by seed.
+- The Walk is structured like a song (`SET_PIECES`, `TRAMS`, `CLAWS` in `course.js`): ordinary rows, Tram works (rhythmic jumpable `plank` rows, every third fenced with `barrier`s), a tram, Pilrig, the Champions parade (`fan`s fill two lanes, the gap weaves one lane at a time), a claw, another tram, Chucking-out time (`drunk`s with `sway` across two lanes). Fixed positions, randomised details.
+- Claws: when Gurry passes a claw point the creature marks his current lane (shadow, `CLAW_WARN`), then slams it (`CLAW_SLAM`). Change lane to dodge. Courses keep `CLAW_CLEAR` free of obstacles around each claw, and trams avoid claws so there's always a lane to dodge into.
+- Pilrig St (`FLIP_FROM`–`FLIP_TO`) flips the canvas into negative (`.flipped`: CSS invert + hue-rotate + wobble) and slows the music (`Audio.setFlip`). Purely presentational.
 - Course rules: every row leaves a passable lane; after a tram rings (`TRAM_ZONE`) only jumpables on the pavements, so no one is forced across the tracks.
 - Hits break kit in order heart → keyboard → mic and slow him `BROKEN_SLOWDOWN` each; holding glue (`GLUE_TIME`) fixes the latest. A hit with everything broken knocks him down (`FALL_TIME`).
 - The Glue creature runs a clean run's speed profile delayed so it reaches the stage at exactly `STAGE_TIME`. It rises from the bottom of the screen as it closes in (`CREATURE_SHOW`), drawn under the sprites and never above his feet. If it reaches him it bites: a hit that breaks kit but never knocks him down, then it drops back `CREATURE_KNOCKBACK`. Records give a decaying speed burst (`RECORD_BOOST`), which is how you pull away.

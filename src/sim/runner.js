@@ -28,6 +28,9 @@ import {
   RECORD_BOOST,
   BOOST_MAX,
   BOOST_DECAY,
+  CLAW_WARN,
+  CLAW_SLAM,
+  CLAW_W,
 } from '../config.js';
 import { KINDS } from './course.js';
 
@@ -83,6 +86,7 @@ export class Runner {
     this.events = [];
     this.obstacles = course.obstacles.map((o) => ({ ...o, x: o.lane * LANE_W, hit: false, ...KINDS[o.kind] }));
     this.pickups = course.pickups.map((p) => ({ ...p, x: p.lane * LANE_W, taken: false }));
+    this.claws = course.claws.map((c) => ({ ...c, state: 'idle', lane: 0, t0: 0, hit: false }));
     this.trams = course.trams.map((tr) => ({ ...tr, s: tr.triggerS + TRAM_LEAD, active: false, hit: false }));
   }
 
@@ -172,7 +176,12 @@ export class Runner {
 
     for (const o of this.obstacles) {
       if (o.walks && o.s - this.s < 30) o.s -= o.walks * dt;
+      if (o.sway) {
+        const k = 0.5 + 0.5 * Math.sin((2 * Math.PI * this.t) / o.sway.period + o.sway.phase);
+        o.x = LANE_W * (o.sway.from + (o.sway.to - o.sway.from) * k);
+      }
     }
+    this._claws();
     for (const tr of this.trams) {
       if (!tr.active && this.s >= tr.triggerS) {
         tr.active = true;
@@ -230,6 +239,32 @@ export class Runner {
       this.lane = this.x <= 0 ? -1 : 1;
       this._hit('tram');
       return;
+    }
+  }
+
+  // The creature reaches up the lane Gurry is in when it triggers.
+  _claws() {
+    for (const c of this.claws) {
+      if (c.state === 'idle' && this.s >= c.s) {
+        c.state = 'warn';
+        c.lane = this.lane;
+        c.t0 = this.t;
+        this.events.push({ type: 'clawWarn', lane: c.lane });
+      }
+      const age = this.t - c.t0;
+      if (c.state === 'warn' && age >= CLAW_WARN) {
+        c.state = 'slam';
+        this.events.push({ type: 'claw', lane: c.lane });
+      }
+      if (c.state === 'slam') {
+        const over = Math.abs(this.x - c.lane * LANE_W) < (PLAYER_W + CLAW_W) / 2;
+        if (!c.hit && over && this.invulnT <= 0 && this.fallT <= 0) {
+          c.hit = true;
+          this.events.push({ type: 'bitten' });
+          this._hit('creature');
+        }
+        if (age >= CLAW_WARN + CLAW_SLAM) c.state = 'done';
+      }
     }
   }
 

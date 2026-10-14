@@ -228,7 +228,229 @@ export function drawObstacle(ctx, o, x, y, u, t) {
       return landlord(ctx, x, y, u, t, o.s);
     case 'lounger':
       return lounger(ctx, x, y, u, t);
+    case 'barrier':
+      return barrier(ctx, x, y, u);
+    case 'plank':
+      return barrier(ctx, x, y, u, true);
+    case 'fan':
+      return fans(ctx, x, y, u, t, o.s);
+    case 'drunk':
+      return drunk(ctx, x, y, u, t, o);
   }
+}
+
+// Red-and-cream striped works barrier; `low` is the knee-high one you hop.
+function barrier(ctx, x, y, u, low = false) {
+  shadow(ctx, x, y, 1.4 * u, 0.18 * u);
+  const w = (low ? 3.0 : 2.6) * u;
+  const h = (low ? 0.5 : 1.15) * u * K;
+  for (const side of [-1, 1]) {
+    line(ctx, x + side * w * 0.42, y, x + side * w * 0.42, y - h, INK, 0.1 * u, 'butt');
+    rrect(ctx, x + side * w * 0.42 - 0.2 * u, y - 0.08 * u, 0.4 * u, 0.1 * u, 0.02 * u, INK);
+  }
+  const bh = (low ? 0.3 : 0.42) * u;
+  const by = y - h;
+  if (!low) {
+    // a second rail and a ROAD CLOSED plate
+    rrect(ctx, x - 0.55 * u, by + bh + 0.04 * u, 1.1 * u, 0.3 * u, 0.02 * u, CREAM, INK, 0.03 * u);
+    ctx.fillStyle = RED;
+    ctx.font = `${0.19 * u}px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ROAD CLOSED', x, by + bh + 0.2 * u);
+  }
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x - w / 2, by, w, bh);
+  ctx.clip();
+  ctx.fillStyle = CREAM;
+  ctx.fillRect(x - w / 2, by, w, bh);
+  ctx.fillStyle = RED;
+  for (let i = -2; i < 12; i++) {
+    const sx = x - w / 2 + i * 0.5 * u;
+    ctx.beginPath();
+    ctx.moveTo(sx, by + bh);
+    ctx.lineTo(sx + 0.25 * u, by + bh);
+    ctx.lineTo(sx + 0.25 * u + bh, by);
+    ctx.lineTo(sx + bh, by);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 0.05 * u;
+  ctx.strokeRect(x - w / 2, by, w, bh);
+  if (low) return;
+  // the flashing lamp
+  ctx.fillStyle = Math.floor(performance.now() / 300) % 2 ? MUSTARD : ORANGE;
+  ctx.beginPath();
+  ctx.arc(x + w * 0.42, by - 0.12 * u, 0.1 * u, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Two fans abreast, olive tops, scarves up, bouncing.
+function fans(ctx, x, y, u, t, seed) {
+  shadow(ctx, x, y, 1.25 * u, 0.2 * u);
+  for (const k of [-1, 1]) {
+    const fx = x + k * 0.6 * u;
+    const bounce = Math.abs(Math.sin(t * 7 + seed + k)) * 0.12 * u;
+    const fy = y - bounce;
+    const hip = fy - 0.8 * u * K;
+    const sh = fy - 1.45 * u * K;
+    line(ctx, fx - 0.09 * u, hip, fx - 0.11 * u, fy, INK, 0.15 * u, 'butt');
+    line(ctx, fx + 0.09 * u, hip, fx + 0.11 * u, fy, INK, 0.15 * u, 'butt');
+    poly(ctx, [fx - 0.27 * u, sh, fx + 0.27 * u, sh, fx + 0.25 * u, hip + 0.04 * u, fx - 0.25 * u, hip + 0.04 * u], OLIVE, INK, 0.035 * u);
+    // collar and sleeves
+    poly(ctx, [fx - 0.1 * u, sh, fx + 0.1 * u, sh, fx, sh + 0.12 * u], CREAM);
+    // arms up holding the scarf
+    const sway = Math.sin(t * 3.5 + seed) * 0.1 * u;
+    line(ctx, fx - 0.24 * u, sh + 0.05 * u, fx - 0.36 * u + sway, sh - 0.55 * u, OLIVE, 0.12 * u);
+    line(ctx, fx + 0.24 * u, sh + 0.05 * u, fx + 0.36 * u + sway, sh - 0.55 * u, OLIVE, 0.12 * u);
+    ctx.save();
+    ctx.translate(fx + sway, sh - 0.6 * u);
+    ctx.fillStyle = CREAM;
+    ctx.fillRect(-0.42 * u, -0.08 * u, 0.84 * u, 0.16 * u);
+    ctx.fillStyle = OLIVE_DK;
+    for (let i = 0; i < 4; i++) ctx.fillRect(-0.38 * u + i * 0.22 * u, -0.08 * u, 0.1 * u, 0.16 * u);
+    ctx.restore();
+    // head, mouth open mid-chant
+    ctx.fillStyle = PINK;
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 0.03 * u;
+    ctx.beginPath();
+    ctx.arc(fx, sh - 0.18 * u, 0.17 * u, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.ellipse(fx, sh - 0.12 * u, 0.05 * u, 0.04 * u + Math.abs(Math.sin(t * 8 + k)) * 0.03 * u, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(fx - 0.08 * u, sh - 0.24 * u, 0.04 * u, 0.03 * u);
+    ctx.fillRect(fx + 0.04 * u, sh - 0.24 * u, 0.04 * u, 0.03 * u);
+  }
+}
+
+// Leaning into the sway, pint held level against all the odds.
+function drunk(ctx, x, y, u, t, o) {
+  shadow(ctx, x, y, 0.45 * u, 0.14 * u);
+  const lean = o.sway ? Math.cos((2 * Math.PI * t) / o.sway.period + o.sway.phase) * 0.35 * (o.sway.to - o.sway.from) : 0;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(lean);
+  const hip = -0.82 * u * K;
+  const sh = -1.42 * u * K;
+  line(ctx, -0.09 * u, hip, -0.14 * u, 0, INK, 0.15 * u, 'butt');
+  line(ctx, 0.09 * u, hip, 0.16 * u, 0, INK, 0.15 * u, 'butt');
+  poly(ctx, [-0.27 * u, sh, 0.27 * u, sh, 0.29 * u, hip + 0.05 * u, -0.29 * u, hip + 0.05 * u], TEAL, INK, 0.035 * u);
+  line(ctx, -0.24 * u, sh + 0.06 * u, -0.34 * u, hip, TEAL, 0.12 * u);
+  line(ctx, 0.24 * u, sh + 0.06 * u, 0.48 * u, sh - 0.12 * u, TEAL, 0.12 * u);
+  ctx.restore();
+  // the pint stays upright whatever the man does
+  const px = x + Math.cos(lean) * 0.5 * u - Math.sin(lean) * sh;
+  const py = y + Math.sin(lean) * 0.5 * u + Math.cos(lean) * (sh - 0.16 * u);
+  poly(ctx, [px - 0.11 * u, py - 0.3 * u, px + 0.11 * u, py - 0.3 * u, px + 0.08 * u, py, px - 0.08 * u, py], MUSTARD, INK, 0.025 * u);
+  ctx.fillStyle = CREAM;
+  ctx.fillRect(px - 0.11 * u, py - 0.34 * u, 0.22 * u, 0.08 * u);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(lean);
+  ctx.fillStyle = PINK;
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 0.03 * u;
+  ctx.beginPath();
+  ctx.arc(0, sh - 0.2 * u, 0.18 * u, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = RED;
+  ctx.beginPath();
+  ctx.arc(0, sh - 0.17 * u, 0.05 * u, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  for (const sx of [-0.08, 0.08]) {
+    ctx.beginPath();
+    ctx.moveTo((sx - 0.035) * u, sh - 0.26 * u);
+    ctx.lineTo((sx + 0.035) * u, sh - 0.24 * u);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// A claw coming up the lane from the bottom of the screen. phase 'warn' draws
+// the shadow it's about to land in; 'slam' draws the arm, `ext` 0..1.
+export function drawClawShadow(ctx, x, yTop, H, u, w, t) {
+  ctx.save();
+  ctx.globalAlpha = 0.28 + 0.18 * Math.sin(t * 30);
+  ctx.fillStyle = INK;
+  ctx.fillRect(x - w / 2, yTop, w, H - yTop);
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = RED;
+  ctx.beginPath();
+  ctx.rect(x - w / 2, yTop, w, H - yTop);
+  ctx.clip();
+  for (let k = -2; k < (H - yTop) / (0.9 * u) + 2; k++) {
+    const sy = yTop + k * 0.9 * u + ((t * 6 * u) % (0.9 * u));
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, sy);
+    ctx.lineTo(x + w / 2, sy - w * 0.5);
+    ctx.lineTo(x + w / 2, sy - w * 0.5 + 0.3 * u);
+    ctx.lineTo(x - w / 2, sy + 0.3 * u);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+export function drawClaw(ctx, x, yTip, H, u, ext) {
+  if (ext <= 0) return;
+  const tip = H + (yTip - H) * ext;
+  const aw = 1.6 * u;
+  const arm = () => {
+    ctx.beginPath();
+    ctx.moveTo(x - aw * 0.7, H + 10);
+    ctx.quadraticCurveTo(x - aw * 0.75, (tip + H) / 2, x - aw * 0.55, tip + 0.5 * u);
+    ctx.lineTo(x + aw * 0.55, tip + 0.5 * u);
+    ctx.quadraticCurveTo(x + aw * 0.75, (tip + H) / 2, x + aw * 0.7, H + 10);
+    ctx.closePath();
+    ctx.moveTo(x + aw * 0.8, tip + 0.45 * u);
+    ctx.ellipse(x, tip + 0.45 * u, aw * 0.8, 0.6 * u, 0, 0, Math.PI * 2);
+  };
+  // cream rim first so it reads on the black tram line too
+  arm();
+  ctx.strokeStyle = CREAM;
+  ctx.lineWidth = 0.22 * u;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  ctx.fillStyle = INK;
+  arm();
+  ctx.fill();
+  // three cream talons
+  for (const k of [-1, 0, 1]) {
+    const bx = x + k * 0.55 * u;
+    const by = tip + 0.15 * u;
+    ctx.beginPath();
+    ctx.moveTo(bx - 0.13 * u, by);
+    ctx.quadraticCurveTo(bx - 0.1 * u + k * 0.1 * u, by - 0.6 * u, bx + k * 0.25 * u, by - 0.85 * u);
+    ctx.quadraticCurveTo(bx + 0.05 * u + k * 0.05 * u, by - 0.45 * u, bx + 0.13 * u, by);
+    ctx.closePath();
+    ctx.fillStyle = INK;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(bx - 0.06 * u, by - 0.05 * u);
+    ctx.quadraticCurveTo(bx - 0.05 * u + k * 0.1 * u, by - 0.55 * u, bx + k * 0.22 * u, by - 0.75 * u);
+    ctx.quadraticCurveTo(bx + 0.02 * u + k * 0.05 * u, by - 0.42 * u, bx + 0.07 * u, by - 0.05 * u);
+    ctx.closePath();
+    ctx.fillStyle = CREAM;
+    ctx.fill();
+  }
+  // cream eye-slits on the back of the paw, like the sleeve
+  ctx.fillStyle = CREAM;
+  ctx.beginPath();
+  ctx.ellipse(x - 0.3 * u, tip + 0.55 * u, 0.15 * u, 0.09 * u, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + 0.3 * u, tip + 0.55 * u, 0.15 * u, 0.09 * u, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = INK;
+  ctx.fillRect(x - 0.32 * u, tip + 0.47 * u, 0.04 * u, 0.16 * u);
+  ctx.fillRect(x + 0.28 * u, tip + 0.47 * u, 0.04 * u, 0.16 * u);
 }
 
 function tv(ctx, x, y, u, t) {

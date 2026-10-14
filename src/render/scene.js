@@ -1,8 +1,8 @@
 // Draws Leith Walk around the runner: pavements, tram line, tenement roofs,
 // then the upright sprites back to front, the Glue creature and paper grain.
 import { RED, RED_DK, INK, CREAM, CREAM_DK, OLIVE, PINK, TEAL, STONE, FONT } from './palette.js';
-import { drawGurry, drawObstacle, drawPickup, drawTram, drawCreature, drawVenue } from './sprites.js';
-import { LANDMARKS, ROUTE_LENGTH, SHOP_SIGNS, TRAM_LEN, TRAM_W, CREATURE_SHOW, VENUE } from '../config.js';
+import { drawGurry, drawObstacle, drawPickup, drawTram, drawCreature, drawVenue, drawClaw, drawClawShadow } from './sprites.js';
+import { LANDMARKS, ROUTE_LENGTH, SHOP_SIGNS, TRAM_LEN, TRAM_W, CREATURE_SHOW, VENUE, CLAW_WARN, CLAW_SLAM, CLAW_W, LANE_W } from '../config.js';
 import { hashSeed } from '../util/rng.js';
 
 const KERB = 1.6;
@@ -152,6 +152,13 @@ export class Scene {
     // what's coming at him.
     drawCreature(ctx, W, H, view.rise, view.look, view.t, this.playerY + 0.3 * u);
 
+    // claw shadows on the ground, under everything upright
+    if (run) {
+      for (const c of run.claws) {
+        if (c.state === 'warn') drawClawShadow(ctx, sx(c.lane * LANE_W), this.playerY - 2.2 * u, H, u, CLAW_W * u, view.t);
+      }
+    }
+
     const sprites = [];
     if (run) {
       for (const o of run.obstacles) if (o.s > sMin && o.s < sMax && !(o.hit && o.kind === 'cone')) sprites.push(o);
@@ -169,6 +176,15 @@ export class Scene {
       else drawObstacle(ctx, o, sx(o.x), sy(o.s), u, view.t);
     }
     if (!drewGurry) drawGurry(ctx, sx(view.px), sy(gs), u, view.gurry);
+
+    if (run) {
+      for (const c of run.claws) {
+        if (c.state !== 'slam' && !(c.state === 'done' && run.t - c.t0 < CLAW_WARN + CLAW_SLAM + 0.25)) continue;
+        const p = (run.t - c.t0 - CLAW_WARN) / (CLAW_SLAM + 0.25);
+        const ext = p < 0.2 ? p / 0.2 : p > 0.65 ? Math.max(0, (1 - p) / 0.35) : 1;
+        drawClaw(ctx, sx(c.lane * LANE_W), this.playerY - 1.8 * u, H, u, ext);
+      }
+    }
 
     this._particles(view.dt);
 
