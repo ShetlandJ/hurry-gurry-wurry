@@ -1,0 +1,16 @@
+{
+  "name": "hurry-gurry-wurry",
+  "version": "1.0.0",
+  "description": "Get Gurry Wurry down Leith Walk to his album launch before the Glue creature catches him.",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "test": "node scripts/test.mjs"
+  },
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "vite": "^8.3.4"
+  }
+}

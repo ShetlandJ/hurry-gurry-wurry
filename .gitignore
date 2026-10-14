@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+.playwright-mcp
+
+# Gurry hasn't cleared publishing the album tracks yet; the site uses the chiptune
+public/music/*
+!public/music/.gitkeep

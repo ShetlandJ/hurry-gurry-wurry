@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#dc3f2b" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 fill=%22%23dc3f2b%22/%3E%3Cpath d=%22M12 64C14 40 20 30 32 30s18 10 20 34z%22 fill=%22%2317130f%22/%3E%3Cpath d=%22M20 34 10 8l18 24zM44 34 54 8 36 32z%22 fill=%22%2317130f%22/%3E%3Cellipse cx=%2225%22 cy=%2242%22 rx=%225%22 ry=%223.5%22 fill=%22%23efe3c6%22/%3E%3Cellipse cx=%2239%22 cy=%2242%22 rx=%225%22 ry=%223.5%22 fill=%22%23efe3c6%22/%3E%3C/svg%3E" />
+    <title>Hurry, Gurry Wurry!</title>
+    <meta name="description" content="Get Gurry Wurry down Leith Walk to his album launch before the Glue creature catches him. Don't break anything. You will break things." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Hurry, Gurry Wurry!" />
+    <meta property="og:description" content="Get Gurry Wurry down Leith Walk to his album launch. Don't break anything. You will break things." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="c"></canvas>
+
+      <div id="hud" hidden>
+        <div class="hud-top">
+          <div class="route">
+            <div class="route-labels"><span>Elm Row</span><b id="landmark">Elm Row</b><span>Foot o' the Walk</span></div>
+            <div class="route-bar"><div id="route-fill"></div><div id="route-creature"></div><div id="route-gurry"></div></div>
+          </div>
+          <div class="hud-buttons">
+            <button class="icon-btn" data-action="mute" aria-label="Mute">
+              <svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path data-wave d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <button class="icon-btn" data-action="pause" aria-label="Pause">
+              <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" fill="currentColor"/><rect x="14" y="5" width="4" height="14" fill="currentColor"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="hud-row">
+          <div class="clock" id="clock"><small>On stage in</small><b>1:17</b></div>
+          <div class="kit" id="kit">
+            <div class="kit-item" data-item="heart" title="Heart">
+              <svg viewBox="0 0 32 32"><path class="whole" d="M16 28 4 16a7 7 0 0 1 12-9 7 7 0 0 1 12 9z"/><path class="dent" d="M16 28 4 16a7 7 0 0 1 12-9l-3 6 5 3-4 5 6-4-3-4 4-6a7 7 0 0 1 11 9z"/></svg>
+            </div>
+            <div class="kit-item" data-item="keyboard" title="Keyboard">
+              <svg viewBox="0 0 32 32"><g class="whole"><rect x="2" y="10" width="28" height="12" rx="2"/><path d="M6 13v6M10 13v6M14 13v6M18 13v6M22 13v6M26 13v6" stroke="#efe3c6" stroke-width="2"/></g><g class="dent"><rect x="1" y="11" width="13" height="12" rx="2" transform="rotate(-14 7 17)"/><rect x="18" y="9" width="13" height="12" rx="2" transform="rotate(16 24 15)"/></g></svg>
+            </div>
+            <div class="kit-item" data-item="mic" title="Mic">
+              <svg viewBox="0 0 32 32"><g class="whole"><rect x="11" y="3" width="10" height="15" rx="5"/><path d="M8 15a8 8 0 0 0 16 0M16 23v6M11 29h10" fill="none" stroke="currentColor" stroke-width="2.5"/></g><g class="dent"><rect x="13" y="2" width="10" height="15" rx="5" transform="rotate(30 18 10)"/><path d="M8 18a8 8 0 0 0 9 7M16 25l-3 5M9 29h10" fill="none" stroke="currentColor" stroke-width="2.5"/></g></svg>
+            </div>
+          </div>
+        </div>
+        <div class="toast" id="toast" hidden></div>
+        <div class="tram-warn" id="tram-warn" hidden><b>DING DING</b><small>tram coming down the middle</small></div>
+        <div class="now-playing" id="now-playing" hidden></div>
+        <button class="glue-btn" id="glue-btn" aria-label="Hold to glue">
+          <svg viewBox="0 0 100 100" class="glue-ring"><circle cx="50" cy="50" r="44" /><circle id="glue-progress" cx="50" cy="50" r="44" /></svg>
+          <span class="glue-label">GLUE</span>
+          <span class="glue-count" id="glue-count">1</span>
+        </button>
+        <div class="key-hint" id="key-hint"><kbd>←</kbd><kbd>→</kbd> dodge <kbd>↑</kbd> jump hold <kbd>↓</kbd> glue</div>
+      </div>
+
+      <div class="countdown" id="countdown" hidden></div>
+
+      <section class="screen title" id="title">
+        <div class="title-card">
+          <h1>
+            <span class="q">“</span>HURRY,<span class="q">”</span>
+            <small><span>GURRY</span><span>WURRY!</span></small>
+          </h1>
+          <p class="pitch">The album launch is at the Foot of the Walk. Gurry is at the top. Get him there before the thing from the sleeve does.</p>
+          <ul class="how">
+            <li><b>Swipe</b> to dodge, <b>swipe up</b> to jump</li>
+            <li>Hit something and it <b>breaks</b>. <b>Hold GLUE</b> to fix it.</li>
+            <li>Grab the <b>records</b>. Mind the <b>trams</b>.</li>
+          </ul>
+          <button class="track-chip" id="track-chip" hidden><small>Soundtrack</small><b id="track-name">Like A Landlord</b></button>
+          <button class="big-btn" id="play-btn">RUN!</button>
+          <p class="best" id="best" hidden></p>
+        </div>
+        <footer class="credit">
+          <a href="https://gurrywurry.bandcamp.com/album/glue" target="_blank" rel="noopener"><b>“Glue”</b>, the new album by Gurry Wurry, is out now</a>
+          <span>Made for Gurry by James</span>
+        </footer>
+      </section>
+
+      <section class="screen end" id="end" hidden>
+        <div class="end-card">
+          <p class="end-head" id="end-head">Made it to Leith Theatre</p>
+          <div class="score"><span class="q">“</span><b id="end-score">9</b><span class="q">”</span></div>
+          <p class="score-sub"><span id="end-tenths">9.4</span> out of 10</p>
+          <blockquote id="end-quip">Happy for now.</blockquote>
+          <cite>Gurry Wurry</cite>
+          <dl class="stats">
+            <div><dt>Time</dt><dd id="st-time">1:08</dd></div>
+            <div><dt>Crashes</dt><dd id="st-hits">0</dd></div>
+            <div><dt>Records</dt><dd id="st-records">0</dd></div>
+            <div><dt>Glued</dt><dd id="st-glued">0</dd></div>
+          </dl>
+          <div class="end-buttons">
+            <button class="big-btn" id="again-btn">AGAIN</button>
+            <button class="big-btn alt" id="share-btn">SHARE</button>
+          </div>
+          <a class="album-link" href="https://gurrywurry.bandcamp.com/album/glue" target="_blank" rel="noopener">Listen to <b>“Glue”</b> on Bandcamp</a>
+        </div>
+      </section>
+
+      <section class="screen paused" id="paused" hidden>
+        <div class="end-card">
+          <p class="end-head">Paused</p>
+          <div class="end-buttons">
+            <button class="big-btn" id="resume-btn">CARRY ON</button>
+            <button class="big-btn alt" id="quit-btn">GIVE UP</button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
