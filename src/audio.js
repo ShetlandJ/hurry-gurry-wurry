@@ -108,18 +108,27 @@ export class Audio {
       src.loop = true;
       const g = this.ctx.createGain();
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.9, t + 0.6);
+      g.gain.linearRampToValueAtTime(1.4, t + 0.2);
       src.connect(g).connect(this.master);
       src.start(t);
       this.crowdSrc = { src, g };
+      this._duck(true);
     } else if (!on && this.crowdSrc) {
       const { src, g } = this.crowdSrc;
       g.gain.cancelScheduledValues(t);
       g.gain.setValueAtTime(g.gain.value, t);
-      g.gain.linearRampToValueAtTime(0, t + 1.5);
-      src.stop(t + 1.6);
+      g.gain.linearRampToValueAtTime(0, t + 1.0);
+      src.stop(t + 1.1);
       this.crowdSrc = null;
+      this._duck(false);
     }
+  }
+
+  // Music drops under the crowd so the chanting takes over. (iOS ignores
+  // <audio>.volume, so there the crowd just plays over the top.)
+  _duck(on) {
+    if (this.el) this.el.volume = on ? 0.3 : 0.85;
+    if (this.synth) this.synth.out.gain.setTargetAtTime(on ? 0.08 : 0.22, this.ctx.currentTime, 0.1);
   }
 
   toggleMute() {
