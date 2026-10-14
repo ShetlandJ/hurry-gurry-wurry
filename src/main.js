@@ -105,6 +105,7 @@ class Game {
     this.acc = 0;
     this.landmarkIdx = 1;
     this.pieceIdx = 0;
+    this.audio.crowd(false);
     this._setFlip(false);
     this.outroT = 0;
     this.input.clear();
@@ -133,6 +134,7 @@ class Game {
     this.prevState = this.state;
     this.state = 'paused';
     this.audio.pauseMusic(true);
+    this.audio.crowd(false);
     $('paused').hidden = false;
   }
 
@@ -140,11 +142,14 @@ class Game {
     this.state = this.prevState || 'play';
     this.last = performance.now();
     this.audio.pauseMusic(false);
+    const parade = SET_PIECES.find((p) => p.kind === 'parade');
+    if (this.run && this.run.s >= parade.from - 28 && this.run.s <= parade.to + 4) this.audio.crowd(true);
     $('paused').hidden = true;
   }
 
   toTitle() {
     this.audio.stopMusic(0.4);
+    this.audio.crowd(false);
     this._setFlip(false);
     this.state = 'title';
     this.run = null;
@@ -359,8 +364,11 @@ class Game {
     const piece = SET_PIECES[this.pieceIdx];
     if (piece && run.s >= piece.from - 28) {
       this._banner(piece.name, piece.sub);
+      if (piece.kind === 'parade') this.audio.crowd(true);
       this.pieceIdx++;
     }
+    const parade = SET_PIECES.find((p) => p.kind === 'parade');
+    if (run.s > parade.to + 4) this.audio.crowd(false);
     // Pilrig: over the old border into Leith, and into the negative
     const flip = run.s >= FLIP_FROM && run.s < FLIP_TO;
     if (flip !== this.flipped) {

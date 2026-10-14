@@ -81,6 +81,45 @@ export class Audio {
     this.sfx.gain.value = 0.7;
     this.sfx.connect(this.master);
     this.noise = this._noiseBuffer();
+    this._loadCrowd();
+  }
+
+  // Optional recording of football fans for the Champions parade:
+  // public/audio/crowd.mp3 (or .m4a). Missing is fine; the parade is just quieter.
+  async _loadCrowd() {
+    for (const ext of ['mp3', 'm4a']) {
+      try {
+        const res = await fetch(`${import.meta.env.BASE_URL}audio/crowd.${ext}`);
+        if (!res.ok || !/audio|octet/.test(res.headers.get('content-type') || '')) continue;
+        this.crowdBuf = await this.ctx.decodeAudioData(await res.arrayBuffer());
+        return;
+      } catch {
+        /* not there */
+      }
+    }
+  }
+
+  crowd(on) {
+    if (!this.ctx || !this.crowdBuf) return;
+    const t = this.ctx.currentTime;
+    if (on && !this.crowdSrc) {
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.crowdBuf;
+      src.loop = true;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.9, t + 0.6);
+      src.connect(g).connect(this.master);
+      src.start(t);
+      this.crowdSrc = { src, g };
+    } else if (!on && this.crowdSrc) {
+      const { src, g } = this.crowdSrc;
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.linearRampToValueAtTime(0, t + 1.5);
+      src.stop(t + 1.6);
+      this.crowdSrc = null;
+    }
   }
 
   toggleMute() {
