@@ -148,6 +148,10 @@ export class Scene {
 
     if (ROUTE_LENGTH + 3 < sMax + 10) drawVenue(ctx, cx, sy(ROUTE_LENGTH + 3), u, W, VENUE, view.venueOpen);
 
+    // The creature goes under the sprites so its horns never hide Gurry or
+    // what's coming at him.
+    drawCreature(ctx, W, H, view.rise, view.look, view.t, this.playerY + 0.3 * u);
+
     const sprites = [];
     if (run) {
       for (const o of run.obstacles) if (o.s > sMin && o.s < sMax && !(o.hit && o.kind === 'cone')) sprites.push(o);
@@ -167,7 +171,6 @@ export class Scene {
     if (!drewGurry) drawGurry(ctx, sx(view.px), sy(gs), u, view.gurry);
 
     this._particles(view.dt);
-    drawCreature(ctx, W, H, view.rise, view.look, view.t);
 
     // speed lines once he's flying
     if (view.speedLines > 0) {
@@ -325,6 +328,6 @@ export class Scene {
 
   creatureRise(run) {
     const gap = run.s - run.creatureS;
-    return Math.max(0, Math.min(1.15, (CREATURE_SHOW - gap) / CREATURE_SHOW));
+    return Math.max(0, Math.min(1, (CREATURE_SHOW - gap) / CREATURE_SHOW));
   }
 }

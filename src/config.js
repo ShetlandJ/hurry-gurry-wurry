@@ -42,8 +42,15 @@ export const TRAM_W = 2.65;
 export const TRAM_ZONE = 95; // after a tram rings, only jumpables on the pavements
 
 // The Glue creature keeps to the schedule and peeks up from the bottom of the
-// screen once it's this close behind; when it reaches him, he's late.
+// screen once it's this close behind. If it reaches him it bites (a hit that
+// breaks kit but never knocks him down) and drops back CREATURE_KNOCKBACK metres.
 export const CREATURE_SHOW = 45;
+export const CREATURE_KNOCKBACK = 40;
+
+// Each record is a burst of pace: how you pull away from the creature.
+export const RECORD_BOOST = 0.8; // m/s added per record
+export const BOOST_MAX = 3;
+export const BOOST_DECAY = 0.9; // m/s lost per second
 
 // Cross streets along Leith Walk, south to north.
 export const LANDMARKS = [

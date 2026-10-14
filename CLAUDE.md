@@ -25,7 +25,7 @@ Run `npm test` after touching `src/sim/` or `src/config.js`. The bot must get a 
 - `src/sim/` is pure and deterministic (no DOM, `Date` or `Math.random`): `course.js` builds obstacles/pickups/trams from a seed, `runner.js` steps one run at `SIM_DT` (120Hz) from input frames, `scoring.js` turns a result into a score, `quips.js` picks Gurry's line by seed.
 - Course rules: every row leaves a passable lane; after a tram rings (`TRAM_ZONE`) only jumpables on the pavements, so no one is forced across the tracks.
 - Hits break kit in order heart → keyboard → mic and slow him `BROKEN_SLOWDOWN` each; holding glue (`GLUE_TIME`) fixes the latest. A hit with everything broken knocks him down (`FALL_TIME`).
-- The Glue creature runs a clean run's speed profile delayed so it reaches the stage at exactly `STAGE_TIME`. It rises from the bottom of the screen as it closes in (`CREATURE_SHOW`); when it catches him, he's late. It's purely visual and never ends the run.
+- The Glue creature runs a clean run's speed profile delayed so it reaches the stage at exactly `STAGE_TIME`. It rises from the bottom of the screen as it closes in (`CREATURE_SHOW`), drawn under the sprites and never above his feet. If it reaches him it bites: a hit that breaks kit but never knocks him down, then it drops back `CREATURE_KNOCKBACK`. Records give a decaying speed burst (`RECORD_BOOST`), which is how you pull away.
 - Scores: only clean and on time is 10; anything else capped at 9.95 and shown floored. Bump `SCORING_VERSION` if costs change what a 10 means. Results are plain JSON (console + last 10 in localStorage under `hgw:`).
 - `src/main.js` is the loop/state machine (title → countdown → play → outro → end) and DOM HUD. `src/render/` is canvas only.
 

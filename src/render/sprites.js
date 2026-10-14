@@ -581,12 +581,16 @@ export function drawTram(ctx, x, yFront, u, len, w) {
 
 // The sleeve's horned black thing rising from the bottom edge. `rise` 0..1,
 // `look` -1..1 shifts the slit pupils toward Gurry.
-export function drawCreature(ctx, W, H, rise, look, t) {
+// It never climbs past Gurry's feet (floor), so the road ahead stays visible.
+export function drawCreature(ctx, W, H, rise, look, t, floor = H * 0.8) {
   if (rise <= 0) return;
-  const s = Math.min(W * 1.05, H * 0.75);
+  rise = Math.min(1, rise);
+  const s = Math.min(W * 0.95, H * 0.5);
   const cx = W * 0.5 + Math.sin(t * 1.3) * W * 0.03;
-  // fully hidden (horn tips included) at rise 0; eyes well up at rise 1
-  const top = H + 0.45 * s - rise * s;
+  // fully hidden (horn tips included) at rise 0; at rise 1 the eyes sit
+  // between his feet and the bottom edge
+  const eyesAt1 = floor + (H - floor) * 0.45;
+  const top = H + 0.45 * s - rise * (H + 0.45 * s - (eyesAt1 - 0.22 * s));
   ctx.save();
   ctx.translate(cx, top);
   const breathe = 1 + Math.sin(t * 3) * 0.015;

@@ -24,6 +24,10 @@ import {
   TRAM_SPEED,
   TRAM_LEN,
   TRAM_W,
+  CREATURE_KNOCKBACK,
+  RECORD_BOOST,
+  BOOST_MAX,
+  BOOST_DECAY,
 } from '../config.js';
 import { KINDS } from './course.js';
 
@@ -59,6 +63,8 @@ export class Runner {
     this.t = 0;
     this.s = 0;
     this.v = SPEED_START;
+    this.boost = 0;
+    this.creatureBack = 0;
     this.lane = -1;
     this.x = -LANE_W;
     this.z = 0;
@@ -85,9 +91,10 @@ export class Runner {
   }
 
   // Where the Glue creature is. It runs a clean run's pace, starting late
-  // enough to reach the stage exactly at STAGE_TIME.
+  // enough to reach the stage exactly at STAGE_TIME, minus however far it's
+  // been knocked back after biting.
   get creatureS() {
-    return cleanS(this.t - (STAGE_TIME - CLEAN_TIME));
+    return cleanS(this.t - (STAGE_TIME - CLEAN_TIME)) - this.creatureBack;
   }
 
   get late() {
@@ -144,14 +151,24 @@ export class Runner {
     if (this.fallT > 0) {
       this.fallT -= dt;
       this.v = 0;
-      if (this.fallT <= 0) this.events.push({ type: 'up' });
+      if (this.fallT <= 0) {
+        this.v = SPEED_START * 0.6;
+        this.events.push({ type: 'up' });
+      }
     } else {
       const target = (SPEED_START + (SPEED_END - SPEED_START) * this.progress) * (1 - BROKEN_SLOWDOWN * this.broken.length);
       const dv = target - this.v;
       this.v += Math.sign(dv) * Math.min(Math.abs(dv), ACCEL * dt);
     }
-    this.s += this.v * dt;
+    this.boost = Math.max(0, this.boost - BOOST_DECAY * dt);
+    this.s += (this.v + (this.fallT > 0 ? 0 : this.boost)) * dt;
     if (this.invulnT > 0) this.invulnT -= dt;
+
+    if (this.creatureS >= this.s && this.invulnT <= 0 && this.fallT <= 0) {
+      this.creatureBack += CREATURE_KNOCKBACK;
+      this.events.push({ type: 'bitten' });
+      this._hit('creature');
+    }
 
     for (const o of this.obstacles) {
       if (o.walks && o.s - this.s < 30) o.s -= o.walks * dt;
@@ -183,7 +200,10 @@ export class Runner {
       if (p.taken || p.s > this.s + 3) continue;
       if (Math.abs(p.s - this.s) < PICKUP_R && Math.abs(p.x - this.x) < PICKUP_R) {
         p.taken = true;
-        if (p.kind === 'record') this.records++;
+        if (p.kind === 'record') {
+          this.records++;
+          this.boost = Math.min(BOOST_MAX, this.boost + RECORD_BOOST);
+        }
         else this.glue = Math.min(GLUE_MAX, this.glue + 1);
         this.events.push({ type: 'pickup', kind: p.kind });
       }
@@ -215,12 +235,16 @@ export class Runner {
 
   _hit(by) {
     this.hits++;
+    this.boost = 0;
     this.invulnT = INVULN_TIME;
     if (this.broken.length < ITEMS.length) {
       const item = ITEMS.find((i) => !this.broken.includes(i.key)).key;
       this.broken.push(item);
       this.v *= HIT_SPEED_KEEP;
       this.events.push({ type: 'break', item, by });
+    } else if (by === 'creature') {
+      this.v *= HIT_SPEED_KEEP;
+      this.events.push({ type: 'gnawed', by });
     } else {
       this.falls++;
       this.fallT = FALL_TIME;

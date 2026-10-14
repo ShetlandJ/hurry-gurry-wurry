@@ -230,6 +230,26 @@ export class Audio {
     // boing
     this._tone('triangle', 180, 420, 0.25, 0.2, 0.08);
   }
+  growl() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const lfo = this.ctx.createOscillator();
+    const lg = this.ctx.createGain();
+    const g = this.ctx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(70, t);
+    o.frequency.exponentialRampToValueAtTime(45, t + 0.6);
+    lfo.frequency.value = 23;
+    lg.gain.value = 20;
+    lfo.connect(lg).connect(o.frequency);
+    this._env(g, t, 0.5, 0.03, 0.6);
+    o.connect(g).connect(this.sfx);
+    o.start(t);
+    lfo.start(t);
+    o.stop(t + 0.7);
+    lfo.stop(t + 0.7);
+  }
   fall() {
     this._tone('sine', 1200, 180, 0.7, 0.25);
     this._noise(0.4, 500, 1, 0.5, 'lowpass', 0.6);

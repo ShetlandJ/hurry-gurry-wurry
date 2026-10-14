@@ -235,7 +235,7 @@ class Game {
       t,
       dt: this.state === 'paused' ? 0 : dt,
       venueOpen: this.state === 'outro' || this.state === 'end',
-      speedLines: moving ? Math.max(0, (run.v - 11) / 2) : 0,
+      speedLines: moving ? Math.min(1, Math.max(0, (run.v + run.boost - 11) / 2)) : 0,
       gurry:
         this.state === 'outro' && this.outroT > 1.25
           ? null
@@ -286,7 +286,7 @@ class Game {
           this.audio.setDamage(run.broken.length);
           this.scene.shake = 1;
           this.scene.burst(p.x, p.y, [INK, CREAM, RED, TEAL, PINK], 18, 260);
-          this._toast(item.broke, 'bad');
+          this._toast(e.by === 'creature' ? `Bitten! ${item.label} broke` : item.broke, 'bad');
           if (run.glue > 0 && !this.taughtGlue) {
             this.taughtGlue = true;
             setTimeout(() => this.state === 'play' && run.broken.length && this._toast('Hold GLUE to fix it', 'small'), 900);
@@ -300,10 +300,19 @@ class Game {
           this.audio.wobble();
           this.scene.shake = 1.4;
           this.scene.burst(p.x, p.y, [INK, CREAM, MUSTARD], 22, 300);
-          this._toast('Down he goes', 'bad');
+          this._toast(e.by === 'creature' ? 'Bitten. Down he goes' : 'Down he goes', 'bad');
           if (navigator.vibrate) navigator.vibrate([60, 40, 90]);
           break;
         case 'up':
+          break;
+        case 'bitten':
+          this.audio.growl();
+          this.scene.shake = 0.8;
+          break;
+        case 'gnawed':
+          this.audio.crash();
+          this.audio.wobble();
+          this._toast('Bitten!', 'bad');
           break;
         case 'glued':
           this.audio.glued();
